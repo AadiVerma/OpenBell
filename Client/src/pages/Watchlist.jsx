@@ -12,6 +12,7 @@ const NSE_INDICES = [
   { key: 'NIFTY500',    label: 'NIFTY 500',      count: 500 },
   { key: 'NIFTYIT',     label: 'NIFTY IT',       count: 10  },
   { key: 'NIFTYBANK',   label: 'NIFTY Bank',     count: 12  },
+  { key: 'NIFTYREIT',   label: 'NIFTY REIT',     count: 7   },
 ]
 
 const inputStyle = {

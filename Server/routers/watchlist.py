@@ -122,7 +122,7 @@ async def seed_from_nse(index: str = "NIFTY50", db: AsyncSession = Depends(get_d
     """
     Bulk-load NSE index stocks into the watchlist.
     Skips tickers already present. Supported indices:
-    NIFTY50, NIFTYNEXT50, NIFTY100, NIFTY200, NIFTY500, NIFTYIT, NIFTYBANK
+    NIFTY50, NIFTYNEXT50, NIFTY100, NIFTY200, NIFTY500, NIFTYIT, NIFTYBANK, NIFTYREIT
     """
     if index.upper() not in INDEX_URLS:
         raise HTTPException(status_code=400, detail=f"Unknown index. Choose from: {list(INDEX_URLS)}")

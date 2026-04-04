@@ -20,6 +20,7 @@ INDEX_URLS = {
     "NIFTY500":     "https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv",
     "NIFTYIT":      "https://nsearchives.nseindia.com/content/indices/ind_niftyitlist.csv",
     "NIFTYBANK":    "https://nsearchives.nseindia.com/content/indices/ind_niftybanklist.csv",
+    "NIFTYREIT":    "https://nsearchives.nseindia.com/content/indices/ind_niftyreits_invitslist.csv",
 }
 
 _HEADERS = {
@@ -87,6 +88,18 @@ NIFTY50_FALLBACK = [
 ]
 
 
+# ── Hardcoded REIT / InvIT fallback (NSE-listed as of Apr 2025) ──────────────
+REIT_FALLBACK = [
+    ("EMBASSY",    "Embassy Office Parks REIT"),
+    ("MINDSPACE",  "Mindspace Business Parks REIT"),
+    ("BROOKFIELD", "Brookfield India Real Estate Trust"),
+    ("NEXUSMALL",  "Nexus Select Trust"),
+    ("INDIGRID",   "India Grid Trust"),
+    ("IRBINVIT",   "IRB InvIT Fund"),
+    ("POWERGRID",  "Power Grid InvIT"),
+]
+
+
 async def fetch_nse_index(index_key: str) -> list[dict]:
     """
     Fetch NSE index constituent CSV and return list of
@@ -125,6 +138,11 @@ async def fetch_nse_index(index_key: str) -> list[dict]:
             return [
                 {"ticker": f"{sym}.NS", "name": name, "exchange": "NSE"}
                 for sym, name in NIFTY50_FALLBACK
+            ]
+        if index_key.upper() == "NIFTYREIT":
+            return [
+                {"ticker": f"{sym}.NS", "name": name, "exchange": "NSE"}
+                for sym, name in REIT_FALLBACK
             ]
         raise RuntimeError(
             f"Could not fetch {index_key} from NSE and no fallback available. "

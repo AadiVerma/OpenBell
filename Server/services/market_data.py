@@ -12,7 +12,7 @@ def _fetch(ticker: str) -> Optional[dict]:
     try:
         stock = yf.Ticker(ticker)
         info = stock.info
-        hist = stock.history(period="30d")
+        hist = stock.history(period="30d", auto_adjust=False)
 
         if hist.empty:
             return None
@@ -20,11 +20,16 @@ def _fetch(ticker: str) -> Optional[dict]:
         latest = hist.iloc[-1]
         prev = hist.iloc[-2] if len(hist) > 1 else latest
 
-        current_price = float(
-            info.get("currentPrice")
-            or info.get("regularMarketPrice")
-            or latest["Close"]
-        )
+        # fast_info.last_price hits a lighter endpoint and is more reliable
+        # for Indian REITs/InvITs where info["currentPrice"] is often stale
+        try:
+            current_price = float(stock.fast_info.last_price)
+        except Exception:
+            current_price = float(
+                info.get("currentPrice")
+                or info.get("regularMarketPrice")
+                or latest["Close"]
+            )
         prev_close = float(
             info.get("regularMarketPreviousClose") or prev["Close"]
         )

@@ -116,6 +116,7 @@ export default function Dashboard() {
   const [loading,  setLoading]  = useState(true)
   const [error,    setError]    = useState('')
   const [filter,   setFilter]   = useState('all')
+  const [search,   setSearch]   = useState('')
   const [selected, setSelected] = useState(null)
   const [jobStatus, setJobStatus] = useState(null) // null | {running, total, processed, skipped, errors, current}
   const pollRef = useRef(null)
@@ -174,10 +175,12 @@ export default function Dashboard() {
     ? Math.round(signals.reduce((a, s) => a + s.confidence, 0) / signals.length)
     : null
 
+  const q = search.trim().toLowerCase()
   const visible = signals.filter(s => {
-    if (filter === 'bullish') return s.signal === 'bullish'
-    if (filter === 'bearish') return s.signal === 'bearish'
-    if (filter === 'high')    return s.confidence >= 70
+    if (filter === 'bullish' && s.signal !== 'bullish') return false
+    if (filter === 'bearish' && s.signal !== 'bearish') return false
+    if (filter === 'high'    && s.confidence < 70)      return false
+    if (q && !s.ticker.toLowerCase().includes(q) && !s.name?.toLowerCase().includes(q)) return false
     return true
   })
 
@@ -309,24 +312,52 @@ export default function Dashboard() {
         </div>
       ) : (
         <>
-          {/* filter tabs */}
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
-            {FILTERS.map(f => (
-              <button
-                key={f.id}
-                onClick={() => setFilter(f.id)}
+          {/* filter tabs + search */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10, marginBottom: 16 }}>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {FILTERS.map(f => (
+                <button
+                  key={f.id}
+                  onClick={() => setFilter(f.id)}
+                  style={{
+                    padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+                    cursor: 'pointer', transition: 'all 0.15s',
+                    ...(filter === f.id
+                      ? { background: '#fff', color: '#000', border: '1px solid #fff' }
+                      : { background: 'transparent', color: '#6b7280', border: '1px solid #2a2a2a' }
+                    ),
+                  }}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+            <div style={{ position: 'relative' }}>
+              <span style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', fontSize: 12, color: '#444', pointerEvents: 'none' }}>⌕</span>
+              <input
+                type="text"
+                placeholder="Search ticker or name…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
                 style={{
-                  padding: '6px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500,
-                  cursor: 'pointer', transition: 'all 0.15s',
-                  ...(filter === f.id
-                    ? { background: '#fff', color: '#000', border: '1px solid #fff' }
-                    : { background: 'transparent', color: '#6b7280', border: '1px solid #2a2a2a' }
-                  ),
+                  paddingLeft: 28, paddingRight: search ? 28 : 12, paddingTop: 6, paddingBottom: 6,
+                  borderRadius: 8, fontSize: 13, width: 200,
+                  background: 'transparent', color: '#e5e7eb',
+                  border: '1px solid #2a2a2a', outline: 'none',
+                  fontFamily: 'inherit',
                 }}
-              >
-                {f.label}
-              </button>
-            ))}
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch('')}
+                  style={{
+                    position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', color: '#555', cursor: 'pointer',
+                    fontSize: 14, lineHeight: 1, padding: 0,
+                  }}
+                >×</button>
+              )}
+            </div>
           </div>
 
           {/* table */}
@@ -349,7 +380,7 @@ export default function Dashboard() {
 
             {visible.length === 0 ? (
               <div style={{ padding: '32px 20px', textAlign: 'center', color: '#555', fontSize: 13 }}>
-                No signals match this filter.
+                {q ? `No signals match "${search}".` : 'No signals match this filter.'}
               </div>
             ) : (
               visible.map((s, i) => (

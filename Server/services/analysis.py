@@ -18,6 +18,10 @@ from services.news import get_stock_news
 
 logger = logging.getLogger(__name__)
 
+# 4pm IST = post-market-close; predictions generated after this are considered final
+IST = datetime.timezone(datetime.timedelta(hours=5, minutes=30))
+_4PM_IST = datetime.time(16, 0)
+
 # ── In-memory job state ───────────────────────────────────────────────────────
 _state: dict = {
     "running":     False,
@@ -61,37 +65,39 @@ async def _analyse(force: bool) -> None:
         async with Session() as db:
             stocks_result = await db.execute(select(WatchlistStock))
             stocks = stocks_result.scalars().all()
-            today = datetime.date.today()
+            now_ist   = datetime.datetime.now(IST)
+            today     = now_ist.date()
+            cutoff    = now_ist.replace(hour=_4PM_IST.hour, minute=_4PM_IST.minute,
+                                        second=0, microsecond=0)
             _state["total"] = len(stocks)
-            logger.info("Starting analysis for %d stocks", len(stocks))
+            logger.info("Starting analysis for %d stocks (cutoff %s IST)", len(stocks), cutoff.strftime("%H:%M"))
 
             for stock in stocks:
                 _state["current"] = stock.ticker
                 async with Session() as sdb:   # fresh session per stock
                     try:
-                        if force:
-                            existing = await sdb.execute(
-                                select(Prediction).where(
-                                    Prediction.ticker == stock.ticker,
-                                    Prediction.date == today,
-                                )
+                        existing = await sdb.execute(
+                            select(Prediction).where(
+                                Prediction.ticker == stock.ticker,
+                                Prediction.date == today,
                             )
-                            row = existing.scalar_one_or_none()
-                            if row:
-                                await sdb.delete(row)
-                                await sdb.commit()
+                        )
+                        row = existing.scalar_one_or_none()
 
-                        if not force:
-                            existing = await sdb.execute(
-                                select(Prediction).where(
-                                    Prediction.ticker == stock.ticker,
-                                    Prediction.date == today,
-                                )
-                            )
-                            if existing.scalar_one_or_none():
-                                _state["skipped"] += 1
-                                logger.info("Skip %s — already predicted today", stock.ticker)
-                                continue
+                        if row:
+                            if not force:
+                                # Normalise to IST for comparison
+                                gen_at = row.generated_at
+                                if gen_at.tzinfo is None:
+                                    gen_at = gen_at.replace(tzinfo=datetime.timezone.utc)
+                                if gen_at.astimezone(IST) >= cutoff:
+                                    _state["skipped"] += 1
+                                    logger.info("Skip %s — already predicted after 4pm IST", stock.ticker)
+                                    continue
+                                logger.info("Re-run %s — previous prediction was before 4pm IST", stock.ticker)
+                            # Delete stale / force-overwrite row before inserting fresh
+                            await sdb.delete(row)
+                            await sdb.commit()
 
                         market_data = await get_stock_data(stock.ticker)
                         if not market_data:
