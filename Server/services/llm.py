@@ -117,7 +117,7 @@ async def predict_stock(
 ) -> StockPrediction:
     prompt = _build_prompt(ticker, market_data, news)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     response_text = await loop.run_in_executor(None, _run_claude, prompt)
 
     logger.debug("Claude raw response for %s:\n%s", ticker, response_text[:500])

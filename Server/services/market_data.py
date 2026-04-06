@@ -64,5 +64,5 @@ def _fetch(ticker: str) -> Optional[dict]:
 
 
 async def get_stock_data(ticker: str) -> Optional[dict]:
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     return await loop.run_in_executor(None, _fetch, ticker)

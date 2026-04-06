@@ -58,7 +58,11 @@ def mark_started() -> None:
 async def _analyse(force: bool) -> None:
     """Runs inside the background thread's own event loop with its own engine."""
     # NullPool: no shared connection pool — each run gets fresh connections
-    engine = create_async_engine(settings.DATABASE_URL, poolclass=NullPool)
+    engine = create_async_engine(
+        settings.DATABASE_URL,
+        poolclass=NullPool,
+        connect_args={"statement_cache_size": 0},
+    )
     Session = async_sessionmaker(bind=engine, expire_on_commit=False)
 
     try:
