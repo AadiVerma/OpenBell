@@ -9,3 +9,9 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# Runtime settings overrides (may contain sensitive credentials)
+.settings.json
+
+# Old-style settings file — never commit this
+app_settings.json

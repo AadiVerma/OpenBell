@@ -197,6 +197,21 @@ export default function Dashboard() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {/* Excel download button */}
+          {signals.length > 0 && (
+            <a
+              href="/api/predictions/report.xlsx"
+              download
+              title="Download Excel report"
+              style={{
+                padding: '7px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500,
+                background: 'transparent', color: '#22c55e', border: '1px solid #166534',
+                cursor: 'pointer', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 5,
+              }}
+            >
+              ⬇ Excel
+            </a>
+          )}
           {/* Force re-run button */}
           {!jobStatus?.running && signals.length > 0 && (
             <button

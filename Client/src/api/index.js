@@ -42,4 +42,10 @@ export const api = {
   // News
   getNews: (ticker, name) =>
     req(`/predictions/news/${ticker}${name ? `?name=${encodeURIComponent(name)}` : ''}`),
+
+  // Settings
+  getSettings:      ()       => req('/settings/'),
+  updateSettings:   (data)   => req('/settings/', { method: 'PATCH', body: JSON.stringify(data) }),
+  testWhatsApp:     ()       => req('/settings/test-whatsapp', { method: 'POST' }),
+  sendReportNow:    ()       => req('/settings/send-report',   { method: 'POST' }),
 }

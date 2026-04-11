@@ -1,6 +1,13 @@
+from __future__ import annotations
+
 import datetime
-from typing import Any, Optional
+
 from pydantic import BaseModel
+
+
+class Factor(BaseModel):
+    type: str
+    text: str
 
 
 class PredictionOut(BaseModel):
@@ -12,12 +19,12 @@ class PredictionOut(BaseModel):
     predicted_direction: str
     target_low: float
     target_high: float
-    reasoning: str
-    factors: Any
     limit_price: float
     current_price: float
-    actual_close: Optional[float]
-    is_correct: Optional[bool]
+    reasoning: str
+    factors: list[Factor]
+    actual_close: float | None
+    is_correct: bool | None
     generated_at: datetime.datetime
 
     model_config = {"from_attributes": True}
@@ -26,6 +33,7 @@ class PredictionOut(BaseModel):
 class PredictRequest(BaseModel):
     ticker: str
     name: str
+    exchange: str = "NSE"
 
 
 class OutcomeUpdate(BaseModel):

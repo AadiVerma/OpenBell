@@ -6,6 +6,7 @@ const links = [
   { to: '/predict',   label: 'Predict'  },
   { to: '/history',   label: 'History'  },
   { to: '/accuracy',  label: 'Accuracy' },
+  { to: '/settings',  label: 'Settings' },
 ]
 
 export default function Navbar() {

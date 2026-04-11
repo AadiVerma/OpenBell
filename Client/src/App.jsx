@@ -5,6 +5,7 @@ import Watchlist from './pages/Watchlist'
 import Predict from './pages/Predict'
 import History from './pages/History'
 import Accuracy from './pages/Accuracy'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -17,7 +18,8 @@ export default function App() {
             <Route path="/watchlist" element={<Watchlist />} />
             <Route path="/predict"   element={<Predict />} />
             <Route path="/history"   element={<History />} />
-            <Route path="/accuracy" element={<Accuracy />} />
+            <Route path="/accuracy"  element={<Accuracy />} />
+            <Route path="/settings" element={<Settings />} />
           </Routes>
         </main>
       </div>
