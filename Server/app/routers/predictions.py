@@ -152,17 +152,64 @@ async def get_news(ticker: str):
 
 @router.get("/report.xlsx")
 async def download_report(
-    date: str = Query(default_factory=lambda: datetime.date.today().isoformat()),
+    date: str | None = None,
     db: AsyncSession = Depends(get_db),
 ):
     from app.core.config import get_settings
-    target = datetime.date.fromisoformat(date)
+
+    if date:
+        target = datetime.date.fromisoformat(date)
+    else:
+        # Try today, then fall back to 2 days ago
+        today = datetime.date.today()
+        preds = await PredictionRepository(db).get_for_date(today)
+        if preds:
+            target = today
+        else:
+            target = today - datetime.timedelta(days=2)
+
     preds = await PredictionRepository(db).get_for_date(target)
+    if not preds:
+        raise HTTPException(404, f"No predictions found for {target.strftime('%Y-%m-%d')}")
+
     xlsx = generate_excel(preds, target, get_settings())
+    date_str = target.strftime("%Y-%m-%d")
     return Response(
         content=xlsx,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename=openbell_{date}.xlsx"},
+        headers={"Content-Disposition": f"attachment; filename=openbell_{date_str}.xlsx"},
+    )
+
+
+@router.get("/report.pdf")
+async def download_pdf_report(
+    date: str | None = None,
+    db: AsyncSession = Depends(get_db),
+):
+    from app.core.config import get_settings
+    from app.services.pdf_report import generate_pdf
+
+    if date:
+        target = datetime.date.fromisoformat(date)
+    else:
+        # Try today, then fall back to 2 days ago
+        today = datetime.date.today()
+        preds = await PredictionRepository(db).get_for_date(today)
+        if preds:
+            target = today
+        else:
+            target = today - datetime.timedelta(days=2)
+
+    preds = await PredictionRepository(db).get_for_date(target)
+    if not preds:
+        raise HTTPException(404, f"No predictions found for {target.strftime('%Y-%m-%d')}")
+
+    pdf_bytes = generate_pdf(preds, get_settings())
+    date_str = target.strftime("%Y-%m-%d")
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=openbell_{date_str}.pdf"},
     )
 
 

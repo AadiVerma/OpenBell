@@ -54,21 +54,32 @@ async def test_whatsapp():
 
 
 @router.post("/send-report")
-async def send_report_now(db: AsyncSession = Depends(get_db)):
+async def send_report_now(
+    db: AsyncSession = Depends(get_db),
+    date: str | None = None,
+):
     from app.services.notification import send_report
     s = get_settings()
-    today = datetime.date.today()
 
-    preds = await PredictionRepository(db).get_for_date(today)
-    if not preds:
-        yesterday = today - datetime.timedelta(days=1)
-        preds = await PredictionRepository(db).get_for_date(yesterday)
+    if date:
+        # Use specified date
+        target = datetime.date.fromisoformat(date)
+    else:
+        # Try today, then fall back to 2 days ago
+        today = datetime.date.today()
+        preds = await PredictionRepository(db).get_for_date(today)
+        if preds:
+            target = today
+        else:
+            target = today - datetime.timedelta(days=2)
+
+    preds = await PredictionRepository(db).get_for_date(target)
 
     if not preds:
-        raise HTTPException(404, "No predictions found for today or yesterday")
+        raise HTTPException(404, f"No predictions found for {target.strftime('%Y-%m-%d')}")
 
     try:
         await asyncio.to_thread(send_report, preds, s)
-        return {"success": True, "predictions_sent": len(preds)}
+        return {"success": True, "predictions_sent": len(preds), "date_sent": target.isoformat()}
     except Exception as exc:
         raise HTTPException(400, str(exc))

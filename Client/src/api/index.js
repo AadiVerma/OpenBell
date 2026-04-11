@@ -48,4 +48,10 @@ export const api = {
   updateSettings:   (data)   => req('/settings/', { method: 'PATCH', body: JSON.stringify(data) }),
   testWhatsApp:     ()       => req('/settings/test-whatsapp', { method: 'POST' }),
   sendReportNow:    ()       => req('/settings/send-report',   { method: 'POST' }),
+
+  // Reports
+  downloadPdfReport: (date) => {
+    const url = `${BASE}/predictions/report.pdf${date ? `?date=${date}` : ''}`
+    window.location.href = url
+  },
 }

@@ -113,7 +113,7 @@ export default function Settings() {
     setMsg(null)
     try {
       const res = await api.sendReportNow()
-      setMsg({ type: 'success', text: `${res.message} (${res.predictions} stocks)` })
+      setMsg({ type: 'success', text: `Report sent (${res.predictions_sent} stocks)` })
     } catch (e) {
       setMsg({ type: 'error', text: e.message })
     } finally {
@@ -251,6 +251,18 @@ export default function Settings() {
         <button style={S.btn('primary')} onClick={handleSave} disabled={saving}>
           {saving ? 'Saving…' : 'Save Settings'}
         </button>
+        <a
+          href="/api/predictions/report.pdf"
+          download
+          style={{
+            padding: '9px 18px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+            background: '#22C55E', color: '#fff', textDecoration: 'none',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+          }}
+          title="Download professional PDF report"
+        >
+          📄 Download PDF Report
+        </a>
         <a
           href="/api/predictions/report.xlsx"
           download

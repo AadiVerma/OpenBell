@@ -4,7 +4,7 @@ Import get_client() wherever you need to call the API.
 """
 from __future__ import annotations
 
-from anthropic import AsyncAnthropic
+from anthropic import AsyncAnthropic  # pyright: ignore[reportMissingImports]
 
 _client: AsyncAnthropic | None = None
 

@@ -15,6 +15,7 @@ dependencies = [
     "httpx>=0.28",
     "twilio>=9.0",
     "openpyxl>=3.1",
+    "reportlab>=4.0",
 ]
 
 [build-system]
