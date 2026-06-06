@@ -46,11 +46,18 @@ class WatchlistRepository:
 
     async def bulk_create(self, stocks: list[dict]) -> int:
         """Insert stocks, silently skip duplicates by ticker."""
-        count = 0
-        for s in stocks:
-            existing = await self.get_by_ticker(s["ticker"])
-            if not existing:
-                self._db.add(WatchlistStock(**s))
-                count += 1
-        await self._db.commit()
-        return count
+        if not stocks:
+            return 0
+            
+        tickers = [s["ticker"] for s in stocks]
+        result = await self._db.execute(
+            select(WatchlistStock.ticker).where(WatchlistStock.ticker.in_(tickers))
+        )
+        existing_tickers = set(result.scalars().all())
+        
+        to_insert = [s for s in stocks if s["ticker"] not in existing_tickers]
+        if to_insert:
+            self._db.add_all([WatchlistStock(**s) for s in to_insert])
+            await self._db.commit()
+            
+        return len(to_insert)

@@ -45,6 +45,21 @@ class PredictionRepository:
         )
         return list(result.scalars().all())
 
+    async def get_latest_signals(self) -> list[Prediction]:
+        result = await self._db.execute(
+            select(Prediction.date).order_by(Prediction.date.desc()).limit(1)
+        )
+        latest_date = result.scalar_one_or_none()
+        if not latest_date:
+            return []
+            
+        result = await self._db.execute(
+            select(Prediction)
+            .where(Prediction.date == latest_date)
+            .order_by(Prediction.confidence.desc())
+        )
+        return list(result.scalars().all())
+
     async def get_history(
         self, ticker: str | None = None, limit: int = 50
     ) -> list[Prediction]:

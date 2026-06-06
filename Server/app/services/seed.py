@@ -19,9 +19,13 @@ _NSE_CSV_URLS: dict[str, str] = {
     "NIFTY100": "https://nsearchives.nseindia.com/content/indices/ind_nifty100list.csv",
     "NIFTY200": "https://nsearchives.nseindia.com/content/indices/ind_nifty200list.csv",
     "NIFTY500": "https://nsearchives.nseindia.com/content/indices/ind_nifty500list.csv",
+    "NIFTYMIDCAP150": "https://nsearchives.nseindia.com/content/indices/ind_niftymidcap150list.csv",
+    "NIFTYSMALLCAP250": "https://nsearchives.nseindia.com/content/indices/ind_niftysmallcap250list.csv",
+    "NIFTYMICROCAP250": "https://nsearchives.nseindia.com/content/indices/ind_niftymicrocap250_list.csv",
     "NIFTYIT": "https://nsearchives.nseindia.com/content/indices/ind_niftyitlist.csv",
     "NIFTYBANK": "https://nsearchives.nseindia.com/content/indices/ind_niftybanklist.csv",
     "NIFTYREIT": "https://nsearchives.nseindia.com/content/indices/ind_niftyreitsinfraivlist.csv",
+    "ALLNSE": "https://nsearchives.nseindia.com/content/equities/EQUITY_L.csv",
 }
 
 _HEADERS = {
@@ -107,8 +111,8 @@ def _fetch_from_nse(url: str) -> list[dict]:
         reader = csv.DictReader(io.StringIO(raw))
         tickers = []
         for row in reader:
-            symbol = (row.get("Symbol") or "").strip()
-            name = (row.get("Company Name") or row.get("Name") or symbol).strip()
+            symbol = (row.get("Symbol") or row.get("SYMBOL") or "").strip()
+            name = (row.get("Company Name") or row.get("NAME OF COMPANY") or row.get("Name") or symbol).strip()
             if symbol:
                 tickers.append({"ticker": f"{symbol}.NS", "name": name})
         return tickers

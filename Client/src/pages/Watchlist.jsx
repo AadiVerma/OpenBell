@@ -5,11 +5,15 @@ const EXCHANGES = ['NSE', 'BSE', 'NASDAQ', 'NYSE']
 const SUFFIX    = { NSE: '.NS', BSE: '.BO', NASDAQ: '', NYSE: '' }
 
 const NSE_INDICES = [
+  { key: 'ALLNSE',      label: 'ALL NSE STOCKS', count: '2200+' },
   { key: 'NIFTY50',     label: 'NIFTY 50',      count: 50  },
   { key: 'NIFTYNEXT50', label: 'NIFTY Next 50',  count: 50  },
   { key: 'NIFTY100',    label: 'NIFTY 100',      count: 100 },
   { key: 'NIFTY200',    label: 'NIFTY 200',      count: 200 },
   { key: 'NIFTY500',    label: 'NIFTY 500',      count: 500 },
+  { key: 'NIFTYMIDCAP150',  label: 'NIFTY Midcap 150', count: 150 },
+  { key: 'NIFTYSMALLCAP250',label: 'NIFTY Smallcap 250', count: 250 },
+  { key: 'NIFTYMICROCAP250',label: 'NIFTY Microcap 250', count: 250 },
   { key: 'NIFTYIT',     label: 'NIFTY IT',       count: 10  },
   { key: 'NIFTYBANK',   label: 'NIFTY Bank',     count: 12  },
   { key: 'NIFTYREIT',   label: 'NIFTY REIT',     count: 7   },
@@ -32,6 +36,7 @@ export default function Watchlist() {
   const [success,  setSuccess]  = useState('')
   const [form,     setForm]     = useState({ ticker: '', name: '', exchange: 'NSE' })
   const [confirmClear, setConfirmClear] = useState(false)
+  const [maxPrice, setMaxPrice] = useState('')
 
   const load = async () => {
     try { setStocks(await api.getStocks()) }
@@ -64,8 +69,9 @@ export default function Watchlist() {
   const handleSeed = async (indexKey) => {
     setSeeding(true); setError(''); setSuccess('')
     try {
-      const res = await api.seedFromNSE(indexKey)
-      flash(`${res.added} stocks added from ${indexKey} (${res.skipped} already present)`)
+      const parsedPrice = maxPrice ? parseFloat(maxPrice) : undefined
+      const res = await api.seedFromNSE(indexKey, parsedPrice)
+      flash(`${res.added} stocks added from ${indexKey} (filtered under ₹${parsedPrice || 'Any'})`)
       await load()
     } catch (e) { flash(e.message, true) } finally { setSeeding(false) }
   }
@@ -104,13 +110,27 @@ export default function Watchlist() {
 
       {/* ── Seed from NSE Index ── */}
       <div style={{ background: '#111', border: '1px solid #1e1e1e', borderRadius: 12, padding: 20 }}>
-        <div style={{ marginBottom: 14 }}>
-          <p style={{ fontSize: 13, fontWeight: 600, color: '#e5e7eb', margin: '0 0 4px' }}>
-            Load from NSE Index
-          </p>
-          <p style={{ fontSize: 12, color: '#555', margin: 0 }}>
-            Fetch live constituent list from NSE archives. Falls back to hardcoded list if NSE is unreachable.
-          </p>
+        <div style={{ marginBottom: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <p style={{ fontSize: 13, fontWeight: 600, color: '#e5e7eb', margin: '0 0 4px' }}>
+              Load from NSE Index
+            </p>
+            <p style={{ fontSize: 12, color: '#555', margin: 0 }}>
+              Fetch live constituent list from NSE archives.
+            </p>
+          </div>
+          <div style={{ width: 140 }}>
+            <label style={{ ...labelStyle, marginBottom: 4 }}>Max Price (₹)</label>
+            <input
+              type="number"
+              min="0"
+              step="any"
+              value={maxPrice}
+              onChange={e => setMaxPrice(e.target.value)}
+              placeholder="e.g. 50"
+              style={{ ...inputStyle, padding: '6px 10px', height: '32px' }}
+            />
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 8 }}>

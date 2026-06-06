@@ -59,7 +59,7 @@ def get_job_state() -> dict:
     }
 
 
-async def run_analysis(force: bool = False) -> None:
+async def run_analysis(force: bool = False, limit: int | None = None) -> None:
     """Entry point for BackgroundTasks. Skips silently if already running."""
     global _state
 
@@ -70,7 +70,7 @@ async def run_analysis(force: bool = False) -> None:
     async with _lock:
         _state = _JobState(running=True, started_at=datetime.now(timezone.utc))
         try:
-            await _execute(force)
+            await _execute(force, limit)
         except Exception as exc:
             logger.exception("Analysis job crashed: %s", exc)
         finally:
@@ -79,12 +79,14 @@ async def run_analysis(force: bool = False) -> None:
             _state.current = None
 
 
-async def _execute(force: bool) -> None:
+async def _execute(force: bool, limit: int | None) -> None:
     async with SessionLocal() as db:
         watchlist_repo = WatchlistRepository(db)
         pred_repo = PredictionRepository(db)
 
         stocks = await watchlist_repo.get_all()
+        if limit is not None and limit > 0:
+            stocks = stocks[:limit]
         _state.total = len(stocks)
         today = datetime.now(timezone.utc).date()
 

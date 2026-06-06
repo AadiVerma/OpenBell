@@ -44,27 +44,54 @@ async def clear_watchlist(db: AsyncSession = Depends(get_db)):
 @router.post("/seed")
 async def seed_from_index(
     index: str = Query("NIFTY50"),
+    max_price: float | None = Query(None, description="Maximum current price to filter stocks"),
     db: AsyncSession = Depends(get_db),
 ):
     tickers = fetch_index_tickers(index)
     if not tickers:
         raise HTTPException(404, f"No tickers found for index '{index}'")
+
+    if max_price is not None:
+        import asyncio
+        import yfinance as yf
+        import math
+        ticker_symbols = [t["ticker"] for t in tickers]
+        # Bulk download prices, this might take ~10-40 seconds for 500 tickers
+        data = await asyncio.to_thread(yf.download, ticker_symbols, period="1d", threads=True)
+        filtered_tickers = []
+        for t in tickers:
+            try:
+                # Handle single vs multiple tickers returned by yfinance
+                if len(ticker_symbols) == 1:
+                    price = data["Close"].iloc[-1]
+                else:
+                    price = data["Close"][t["ticker"]].iloc[-1]
+                
+                if not math.isnan(price) and price <= max_price:
+                    filtered_tickers.append(t)
+            except Exception:
+                pass
+        tickers = filtered_tickers
+        if not tickers:
+            raise HTTPException(404, f"No tickers found under price {max_price} for index '{index}'")
+
     added = await WatchlistRepository(db).bulk_create(tickers)
     return {"added": added, "total": len(tickers), "index": index}
 
 
 @router.get("/signals", response_model=list[PredictionOut])
 async def get_signals(db: AsyncSession = Depends(get_db)):
-    return await PredictionRepository(db).get_for_date(datetime.date.today())
+    return await PredictionRepository(db).get_latest_signals()
 
 
 @router.post("/run")
 async def trigger_analysis(
     background_tasks: BackgroundTasks,
     force: bool = Query(False),
+    limit: int | None = Query(None, description="Maximum number of stocks to analyze"),
 ):
-    background_tasks.add_task(run_analysis, force)
-    return {"status": "started", "force": force}
+    background_tasks.add_task(run_analysis, force, limit)
+    return {"status": "started", "force": force, "limit": limit}
 
 
 @router.get("/run/status")

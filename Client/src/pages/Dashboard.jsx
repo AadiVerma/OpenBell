@@ -118,6 +118,7 @@ export default function Dashboard() {
   const [filter,   setFilter]   = useState('all')
   const [search,   setSearch]   = useState('')
   const [selected, setSelected] = useState(null)
+  const [runLimit, setRunLimit] = useState(50)
   const [jobStatus, setJobStatus] = useState(null) // null | {running, total, processed, skipped, errors, current}
   const pollRef = useRef(null)
 
@@ -159,7 +160,8 @@ export default function Dashboard() {
   const handleRun = async (force = false) => {
     setError('')
     try {
-      await api.runAnalysis(force)
+      const parsedLimit = runLimit ? parseInt(runLimit, 10) : undefined
+      await api.runAnalysis(force, parsedLimit)
       // Immediately show "running" state by fetching status once
       const s = await api.runStatus()
       setJobStatus(s)
@@ -197,6 +199,19 @@ export default function Dashboard() {
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!jobStatus?.running && (
+            <div style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid #2a2a2a', borderRadius: 8, padding: '0 8px', height: 32 }}>
+              <span style={{ fontSize: 11, color: '#555', marginRight: 6 }}>Limit:</span>
+              <input 
+                type="number" 
+                min="1"
+                value={runLimit} 
+                onChange={e => setRunLimit(e.target.value)}
+                placeholder="All"
+                style={{ width: 40, background: 'transparent', border: 'none', color: '#fff', fontSize: 12, outline: 'none', textAlign: 'center' }}
+              />
+            </div>
+          )}
           {/* Excel download button */}
           {signals.length > 0 && (
             <a

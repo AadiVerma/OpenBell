@@ -18,9 +18,19 @@ export const api = {
   addStock:     (data)     => req('/watchlist/stocks', { method: 'POST', body: JSON.stringify(data) }),
   removeStock:  (ticker)   => req(`/watchlist/stocks/${ticker}`, { method: 'DELETE' }),
   clearStocks:  ()         => req('/watchlist/stocks', { method: 'DELETE' }),
-  seedFromNSE:  (index)    => req(`/watchlist/seed?index=${index}`, { method: 'POST' }),
+  seedFromNSE:  (index, maxPrice) => {
+    let url = `/watchlist/seed?index=${index}`
+    if (maxPrice) url += `&max_price=${maxPrice}`
+    return req(url, { method: 'POST' })
+  },
   getSignals:  ()         => req('/watchlist/signals'),
-  runAnalysis: (force = false) => req(`/watchlist/run${force ? '?force=true' : ''}`, { method: 'POST' }),
+  runAnalysis: (force = false, limit) => {
+    let url = `/watchlist/run${force ? '?force=true' : ''}`
+    if (limit) {
+      url += force ? `&limit=${limit}` : `?limit=${limit}`
+    }
+    return req(url, { method: 'POST' })
+  },
   runStatus:   ()              => req('/watchlist/run/status'),
 
   // Predictions
